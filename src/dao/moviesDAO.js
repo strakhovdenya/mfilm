@@ -62,7 +62,7 @@ export default class MoviesDAO {
       // here is only included to avoid sending 46000 documents down the
       // wire.
       // cursor = await movies.find().limit(1)
-      cursor = await movies.find({ "countries": { $in: countries } }, {projection:{ "title": 1 }});
+      cursor = await movies.find({ "countries": { $in: countries } }, { projection: { "title": 1 } });
 
     } catch (e) {
       console.error(`Unable to issue find command, ${e}`)
@@ -118,7 +118,7 @@ export default class MoviesDAO {
 
     // TODO Ticket: Text and Subfield Search
     // Construct a query that will search for the chosen genre.
-    const query = { "genres": { $in: searchGenre}}
+    const query = { "genres": { $in: searchGenre } }
     const project = {}
     const sort = DEFAULT_SORT
 
@@ -248,7 +248,7 @@ export default class MoviesDAO {
         .find(query)
         .project(project)
         .sort(sort);
-        
+
     } catch (e) {
       console.error(`Unable to issue find command, ${e}`)
       return { moviesList: [], totalNumMovies: 0 }
@@ -303,6 +303,31 @@ export default class MoviesDAO {
         {
           $match: {
             _id: ObjectId(id)
+          }
+
+        }
+        , {
+          $lookup: {
+            'from': 'comments',
+            'let': {
+              'movie_id': '$_id'
+            },
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    '$eq': [
+                      '$movie_id', '$$movie_id'
+                    ]
+                  }
+                }
+              }, {
+                '$sort': {
+                  'date': -1
+                }
+              }
+            ],
+            'as': 'comments'
           }
         }
       ]
