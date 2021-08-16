@@ -42,11 +42,10 @@ export default class CommentsDAO {
    * @returns {DAOResponse} Returns an object with either DB response or "error"
    */
   static async addComment(movieId, user, comment, date) {
-    console.log(movieId, user, comment, date);
     try {
       // TODO Ticket: Create/Update Comments
       // Construct the comment document to be inserted into MongoDB.
-      const commentDoc = { 
+      const commentDoc = {
         name: user.name,
         email: user.email,
         movie_id: ObjectId(movieId),
@@ -77,7 +76,7 @@ export default class CommentsDAO {
       // Use the commentId and userEmail to select the proper comment, then
       // update the "text" and "date" fields of the selected comment.
       const updateResponse = await comments.updateOne(
-        { "_id": ObjectId(commentId), email: userEmail},
+        { "_id": ObjectId(commentId), email: userEmail },
         { $set: { text, date } },
       )
 
@@ -103,6 +102,7 @@ export default class CommentsDAO {
       // Use the userEmail and commentId to delete the proper comment.
       const deleteResponse = await comments.deleteOne({
         _id: ObjectId(commentId),
+        email: userEmail
       })
 
       return deleteResponse
@@ -123,11 +123,28 @@ export default class CommentsDAO {
     try {
       // TODO Ticket: User Report
       // Return the 20 users who have commented the most on MFlix.
-      const pipeline = []
+      const pipeline = [
+        {
+          '$match': {}
+        }, {
+          '$group': {
+            '_id': '$email',
+            'count': {
+              '$sum': 1
+            }
+          }
+        }, {
+          '$sort': {
+            'count': -1
+          }
+        }, {
+          '$limit': 20
+        }
+      ]
 
       // TODO Ticket: User Report
       // Use a more durable Read Concern here to make sure this data is not stale.
-      const readConcern = comments.readConcern
+      const readConcern = 'majority'
 
       const aggregateResult = await comments.aggregate(pipeline, {
         readConcern,
