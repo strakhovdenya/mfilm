@@ -48,7 +48,6 @@ describe("Create/Update Comments", () => {
       comment.text,
       date,
     )
-
     expect(postCommentResult.insertedCount).toBe(1)
     expect(postCommentResult.insertedId).not.toBe(null)
 
